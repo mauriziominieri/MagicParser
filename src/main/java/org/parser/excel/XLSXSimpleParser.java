@@ -6,7 +6,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.parser.utils.PropertiesUtils;
+import org.parser.utils.PropertiesUtilsParser;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -116,7 +116,7 @@ public class XLSXSimpleParser<T> extends XLSXParser2<T> {
             } catch (Exception e) {
                 workbook.close();
                 e.printStackTrace();
-                throw new ExcelException(PropertiesUtils.getMessage("message.excel.sheetName", new Object[]{sheet.getSheetName()}));
+                throw new ExcelException(PropertiesUtilsParser.getMessage("message.excel.sheetName", new Object[]{sheet.getSheetName()}));
             }
         }
     }
@@ -146,7 +146,7 @@ public class XLSXSimpleParser<T> extends XLSXParser2<T> {
             } catch (Exception e) {
                 workbook.close();
                 e.printStackTrace();
-                throw new ExcelException(PropertiesUtils.getMessage("message.excel.sheetName", new Object[]{sheet.getSheetName()}));
+                throw new ExcelException(PropertiesUtilsParser.getMessage("message.excel.sheetName", new Object[]{sheet.getSheetName()}));
             }
         }
     }

@@ -4,7 +4,7 @@ import lombok.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.parser.utils.PropertiesUtils;
+import org.parser.utils.PropertiesUtilsParser;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
@@ -72,7 +72,7 @@ public class XLSXParser2<T> {
                     workbook.close();
                     e.printStackTrace();
                     //			listUploadService.save(new ListUploadFileDto(new Date(),file.getOriginalFilename(),rowIndex));
-                    throw new ExcelException(PropertiesUtils.getMessage("message.excel.riga", new Object[]{sheet.getSheetName(), rowIndex}));
+                    throw new ExcelException(PropertiesUtilsParser.getMessage("message.excel.riga", new Object[]{sheet.getSheetName(), rowIndex}));
                 }
             }
         }
@@ -123,7 +123,7 @@ public class XLSXParser2<T> {
 
         for (Header2 xlsxHeader : xlsxHeaders) {
             if (!row.getCell(xlsxHeader.getColumnIndex()).getStringCellValue().replaceAll("\\s+", "").equalsIgnoreCase(xlsxHeader.getColumnName().replaceAll("\\s+", "")))
-                throw new ExcelException(PropertiesUtils.getMessage("message.excel.header", new Object[]{xlsxHeader.getColumnName()}));
+                throw new ExcelException(PropertiesUtilsParser.getMessage("message.excel.header", new Object[]{xlsxHeader.getColumnName()}));
         }
     }
 
@@ -308,7 +308,7 @@ public class XLSXParser2<T> {
             } catch (Exception e) {
                 workbook.close();
                 e.printStackTrace();
-                throw new ExcelException(PropertiesUtils.getMessage("message.excel.sheetName", new Object[]{ sheet.getSheetName() }));
+                throw new ExcelException(PropertiesUtilsParser.getMessage("message.excel.sheetName", new Object[]{ sheet.getSheetName() }));
             }
         }
     }
@@ -321,7 +321,7 @@ public class XLSXParser2<T> {
             } catch (Exception e) {
                 workbook.close();
                 e.printStackTrace();
-                throw new ExcelException(PropertiesUtils.getMessage("message.excel.sheetName", new Object[]{ sheet.getSheetName() }));
+                throw new ExcelException(PropertiesUtilsParser.getMessage("message.excel.sheetName", new Object[]{ sheet.getSheetName() }));
             }
         }
     }
@@ -335,7 +335,7 @@ public class XLSXParser2<T> {
         } catch (Exception e) {
             workbook.close();
             e.printStackTrace();
-            throw new ExcelException(PropertiesUtils.getMessage("message.excel.sheetName", new Object[]{ sheet.getSheetName() }));
+            throw new ExcelException(PropertiesUtilsParser.getMessage("message.excel.sheetName", new Object[]{ sheet.getSheetName() }));
         }
     }
 

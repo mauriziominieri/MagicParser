@@ -7,16 +7,16 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 
 @Component
-public class PropertiesUtils {
+public class PropertiesUtilsParser {
 
 	@Autowired
-	SpringContext springContext;
+	SpringContextParser springContext;
 
 	private static MessageSource messageSource;
 
 	@PostConstruct
 	private void init() {
-		messageSource = SpringContext.getBean(MessageSource.class);
+		messageSource = SpringContextParser.getBean(MessageSource.class);
 	}
 
 	public static String getMessage(String pattern) {
