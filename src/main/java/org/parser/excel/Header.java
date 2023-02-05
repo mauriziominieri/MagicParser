@@ -5,10 +5,10 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class Header2 {
+public class Header {
 	private final String fieldName;
 	private final String columnName;
-	private final int columnIndex; // TODO vedere se serve
+	private final int columnIndex; // TODO vedere se serve (IMPORT EXCEL)
 	private final String picchettoGroup;
-	private final List<Coordinata> coordinataList;
+	private final List<Coordinate> coordinateList;
 }

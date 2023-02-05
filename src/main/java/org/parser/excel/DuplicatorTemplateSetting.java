@@ -1,9 +1,8 @@
 package org.parser.excel;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.List;
 
@@ -17,20 +16,10 @@ import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
-public class XLSXCantiereTemplateSetting<T> extends XLSXTemplateSetting {
+@Data
+public class DuplicatorTemplateSetting<T> extends TemplateSetting {
     private List<T> objectList; // lista degli oggetti poi da scrivere nell'excel
-    private int objectListPortion; // n oggetti possono essere divisi in porzioni
+    private String key; // la stringa da cercare nell'excel che rappresenta la porzione poi da duplicare e riempire
     private Direction direction; // fissata la cella header decide in che direzione scrivere il valore
     private int step; // ogni quante celle riempire in quella direzione (utile per un layout "a scacchi")
-    private String headerGroup; // potrebbe essere utile differenziare alcune celle dell'header in un gruppo
-    private int headerGroupStartIndex; // per dare un inizio diverso a quel gruppo
-
-    public enum Direction {
-        UP,
-        RIGHT,
-        BOTTOM,
-        LEFT
-    }
 }

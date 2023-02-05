@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -22,12 +24,11 @@ public class MagicParserService {
 //        return parser.prova1(cls, cls2, objList, objList2, numSheet, path);
 //    }
 
-    public ByteArrayInputStream exportExcel(String templatePath, int sheetIndex, List<XLSXTemplateSetting> xlsxTemplateSettingList) throws Exception {
-        XLSXParser2 parser = new XLSXParser2();
-        return parser.write(templatePath, sheetIndex, xlsxTemplateSettingList);
+    public ByteArrayInputStream exportExcel(String templatePath, int sheetIndex, List<TemplateSetting> templateSettingList) throws IOException, InvocationTargetException, IllegalAccessException, ExcelException {
+        return new MagicParser().write(templatePath, sheetIndex, templateSettingList);
     }
 
-    public <T> List<T> importExcel(MultipartFile file, XLSXParser2<T> parser, Class<T> cls, int numSheet, int headerRow) throws Exception {
-        return parser.fromExcelToObj(file, cls, numSheet, headerRow);
-    }
+//    public <T> List<T> importExcel(MultipartFile file, XLSXParser2<T> parser, Class<T> cls, int numSheet, int headerRow) throws Exception {
+//        return parser.fromExcelToObj(file, cls, numSheet, headerRow);
+//    }
 }
