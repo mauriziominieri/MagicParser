@@ -1,7 +1,6 @@
 package org.parser.excel;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.Data;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -11,19 +10,26 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-@NoArgsConstructor
-@AllArgsConstructor
+/**
+ * Created by IntelliJ IDEA.
+ *
+ * @author: Maurizio Minieri
+ * @email: mauminieri@gmail.com
+ * @website: www.mauriziominieri.it
+ */
+
+@Data
 public class SimpleParser<T> extends MagicParser {
 
-    private List<T> objectList;
-    private T object;
-    private boolean fillDuplicateHeadersCells;
-    private int objectListPortion;
-    private Direction direction;
-    private int steps;
-    private String headerGroup;
-    private int headerGroupStartIndex;
-    private boolean copyStyle;
+    List<T> objectList; // package-private per comodità nella sottoclasse
+    T object;
+    boolean fillDuplicateHeadersCells;
+    int objectListPortion;
+    Direction direction;
+    int steps;
+    String headerGroup;
+    int headerGroupStartIndex;
+    boolean copyStyle;
 
     /**
      * Permette di scrivere su file excel
@@ -70,13 +76,13 @@ public class SimpleParser<T> extends MagicParser {
      */
     protected List<Header> getHeaders() {
         List<Header> listHeader = new ArrayList<>();
-        for(java.lang.reflect.Field field : object.getClass().getDeclaredFields()) { // scorro tutti gli attributi della classe cls
-            Field importField = field.getAnnotation(Field.class); // creoun oggetto Field
+        for(java.lang.reflect.Field field : object.getClass().getDeclaredFields()) { // scorro tutti gli attributi della classe cls, il field è preso grazie alla reflection
+            Field importField = field.getAnnotation(Field.class); // degli attributi nella classe prendo solo quelli taggati con @Field
             if(importField != null) {
                 String xlsxColumn = importField.column()[0]; // IL NOME DELLA COLONNA NELL'EXCEL PRESO DAL @Field
-                String picchettoGroup = importField.group()[0];
+                String group = importField.group()[0];
                 List<Coordinate> coordinateList = getHeadersCoordinates(xlsxColumn);
-                listHeader.add(new Header(field.getName(), xlsxColumn, -1, picchettoGroup, coordinateList)); // TODO controllare se da problemi
+                listHeader.add(new Header(field.getName(), xlsxColumn, -1, group, coordinateList));
             }
         }
         return listHeader;

@@ -1,0 +1,5 @@
+target/classes/org/parser/dto/
+src/main/java/org/parser/Application.java
+src/main/java/org/parser/dto/
+src/main/java/org/parser/excel/MagicParserController.java
+target/classes/org/parser/excel/MagicParserController.class

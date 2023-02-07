@@ -20,6 +20,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Created by IntelliJ IDEA.
+ *
+ * @author: Maurizio Minieri
+ * @email: mauminieri@gmail.com
+ * @website: www.mauriziominieri.it
+ */
+
 @Data
 public class MagicParser<T> {
     static Workbook workbook;  // package-private per comodità per le sottoclassi
@@ -259,7 +267,7 @@ public class MagicParser<T> {
         else if(setting instanceof DuplicatorTemplateSetting) {
             DuplicatorTemplateSetting s = (DuplicatorTemplateSetting) setting;
             DuplicatorParser parser = (DuplicatorParser) setting.getMagicParser();
-            parser.write(s.getObjectList().get(0).getClass(), s.getObjectList(), s.getKey(), s.isCopyStyle());
+            parser.write(s.getObjectClass(), s.getObjectList(), s.getKey(), s.isCopyStyle());
         }
     }
 
