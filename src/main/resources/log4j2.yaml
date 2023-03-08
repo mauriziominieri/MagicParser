@@ -1,0 +1,46 @@
+Configuration:
+  name: Default
+  Properties:
+    Property:
+      name: log-path
+      value: "logs"
+  Appenders:
+    Console:
+      name: Console
+      target: SYSTEM_OUT
+      PatternLayout:
+        pattern: "%d{yyyy-MM-dd HH:mm:ss}  %highlight{%-5level} --- [%-15.15t{1.}] %style{%-40.40logger{1.}}{CYAN} : %m%n%wEx"
+        disableAnsi: false
+    RollingFile:
+      - name: RollingFile
+        fileName: ${log-path}/magic_parser.log
+        filePattern: "logs/archivio/$${date:yyyy-MM-dd}/magic_parser-%d{yyyy-MM-dd}-%i.log.zip"
+        PatternLayout:
+          pattern: "%d{yyyy-MM-dd HH:mm:ss}  %highlight{%-5level} --- [%-15.15t{1.}] %style{%-40.40logger{1.}}{CYAN} : %m%n%wEx"
+        Policies:
+          # rollover on startup, daily and when the file reaches 10 MegaBytes
+          OnStartupTriggeringPolicy:
+            minSize: 1
+          TimeBasedTriggeringPolicy:
+            interval: 1
+          SizeBasedTriggeringPolicy:
+            size: 10 MB
+  #        DefaultRollOverStrategy:
+  #          max: 30
+  Loggers:
+    Root:
+      level: info
+      AppenderRef:
+        - ref: Console
+        - ref: RollingFile
+    Logger:
+      - name: org.parser.excel
+        additivity: false
+        level: debug
+#          AppenderRef:
+#            - ref: Console
+#              level: info
+#            - ref: File
+#              level: error
+#            - ref: RollingFile
+#              level: debug

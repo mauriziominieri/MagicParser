@@ -1,23 +1,27 @@
 package org.parser.excel;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.Data;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-@NoArgsConstructor
-@AllArgsConstructor
-public class ComplexParser<T> extends MagicParser {
-    private T object;
-    private String symbol;
+/**
+ * Created by IntelliJ IDEA.
+ *
+ * @author: Maurizio Minieri
+ * @email: mauminieri@gmail.com
+ * @website: www.mauriziominieri.it
+ */
+
+@Data
+public class ComplexParser<T> extends MagicParser<T> {
+    T object;
+    String symbol;
 
     /**
      * Permette di scrivere su file excel
@@ -44,12 +48,12 @@ public class ComplexParser<T> extends MagicParser {
      */
     protected List<Header> getHeaders() {
         List<Header> listHeader = new ArrayList<>();
-        for(java.lang.reflect.Field field : object.getClass().getDeclaredFields()) { // scorro tutti gli attributi della classe dell'oggetto
-            Field importField = field.getAnnotation(Field.class);
+        for(java.lang.reflect.Field field : object.getClass().getDeclaredFields()) { // scorro tutti gli attributi della classe cls, il field è preso grazie alla reflection
+            Field importField = field.getAnnotation(Field.class); // degli attributi nella classe prendo solo quelli taggati con @Field
             if(importField != null) {
                 String xlsxColumn = importField.column()[0]; // IL NOME DELLA COLONNA NELL'EXCEL PRESO DAL @Field
                 List<Coordinate> coordinataList = getHeadersCoordinates(xlsxColumn);
-                listHeader.add(new Header(field.getName(), xlsxColumn, -1, null, coordinataList)); // TODO ho fatto questa modifica, devo capire se da problemi
+                listHeader.add(new Header(field.getName(), xlsxColumn, -1, null, coordinataList));
             }
         }
         return listHeader;
@@ -61,15 +65,19 @@ public class ComplexParser<T> extends MagicParser {
      * @param columnTitle   Titolo della colonna dell'header da cercare
      */
     protected List<Coordinate> getHeadersCoordinates(String columnTitle) {
-        columnTitle = this.symbol + columnTitle;
+        columnTitle = (this.symbol + columnTitle).replaceAll("\\s+", ""); // elimino tutti gli spazi
         int rowCount = sheet.getLastRowNum();
         List<Coordinate> coordinataList = new ArrayList<>();
         for(int currentRowIndex = 0; currentRowIndex <= rowCount; currentRowIndex++) {
             Row row = sheet.getRow(currentRowIndex);
             if (row != null) {
                 for (Cell cell : row) {
-                    if (CellType.STRING.equals(cell.getCellType()) && columnTitle.replaceAll("\\s+", "").equalsIgnoreCase(cell.getStringCellValue().replaceAll("\\s+", "")))
-                        coordinataList.add(new Coordinate(cell.getRowIndex(), cell.getColumnIndex()));
+                    if(CellType.STRING.equals(cell.getCellType())) { // con il primo if gestisco la cella unificata (solitamente) a inizio report contenente le date REPORT AVANZAMENTO
+                        if((columnTitle.equalsIgnoreCase("*avanzamentoda") || columnTitle.equalsIgnoreCase("*avanzamentoa")) && cell.getStringCellValue().replaceAll("\\s+", "").equalsIgnoreCase("reportavanzamentodal*avanzamentodaal*avanzamentoa"))
+                            coordinataList.add(new Coordinate(cell.getRowIndex(), cell.getColumnIndex()));
+                        else if(columnTitle.equalsIgnoreCase(cell.getStringCellValue().replaceAll("\\s+", "")))
+                            coordinataList.add(new Coordinate(cell.getRowIndex(), cell.getColumnIndex()));
+                    }
                 }
             }
         }

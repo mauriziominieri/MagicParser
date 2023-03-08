@@ -1,0 +1,29 @@
+server:
+  port: 8080
+spring:
+  jackson:
+    time-zone: Europe/Rome
+  h2:
+    console.enabled: true
+    settings.trace: false
+    settings.web-allow-others: false
+  datasource:
+    url: jdbc:h2:mem:mydb
+    username: magicParser
+    password:
+    driverClassName: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+  springfox:
+    documentation:
+      swaggerUi:
+        enabled: true
+      enabled: true
+    swagger-ui:
+      resources:
+        swagger:
+          enabled: true
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER

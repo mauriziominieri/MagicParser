@@ -1,11 +1,8 @@
 package org.parser.excel;
 
-import lombok.*;
+import lombok.Data;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.parser.utils.PropertiesUtilsParser;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -13,12 +10,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,16 +23,19 @@ import java.util.stream.Stream;
 
 @Data
 public class MagicParser<T> {
+
     static Workbook workbook;  // package-private per comodità per le sottoclassi
     static Sheet sheet;
+    private int sheetIndex;
+    private String avanzamentoDa = "";
+    private Map<Integer, Boolean> map = new HashMap<>();
 
-    // controlla se esiste il metodo get partendo dal field, es. nomeCantiere cerca getNomeCantiere
     /**
-     * Permette di scrivere su file excel
+     * Stabilisce se è un metodo get
      *
-     * @param object        Oggetto da scrivere
-     * @param symbol        Il simbolo nel template che identifica la cella da sovrascrivere (formato <symbol valore>)
-     * @param copyStyle     Se copiare lo stile della cella da sovrascrivere
+     * @param field
+     * @param method
+     * @return
      */
     protected boolean isGetterMethod(String field, Method method) {
         return method.getName()
@@ -48,11 +44,11 @@ public class MagicParser<T> {
     }
 
     /**
-     * Permette di scrivere su file excel
+     * Stabilisce se è un metodo set
      *
-     * @param object        Oggetto da scrivere
-     * @param symbol        Il simbolo nel template che identifica la cella da sovrascrivere (formato <symbol valore>)
-     * @param copyStyle     Se copiare lo stile della cella da sovrascrivere
+     * @param field
+     * @param method
+     * @return
      */
     protected boolean isSetterMethod(String field, Method method) {
         return method.getName()
@@ -60,181 +56,41 @@ public class MagicParser<T> {
                         .toUpperCase() + field.substring(1));
     }
 
-    // TODO DA QUI IMPORT
-    public List<T> fromExcelToObj(MultipartFile file, Class<T> cls, int numSheet, int headerRow) throws Exception {
-
-        List<T> outList = parse(file, cls, numSheet, headerRow);
-
-        return outList;
-    }
-
-    protected List<T> parse(MultipartFile file, Class<T> cls, int numSheet, int headerRow) throws Exception {
-
-        int rowIndex = 0; // TODO forse serve come attributo
-        List<T> out = new ArrayList<>();
-
-        Workbook workbook = WorkbookFactory.create(file.getInputStream());
-        this.workbook = workbook;
-        Sheet sheet = workbook.getSheetAt(numSheet);
-        List<Header> xlsxHeaders = modelObjectToXLSXHeader(cls, sheet, headerRow);
-        validateHeader(sheet.getRow(headerRow), xlsxHeaders);
-
-        for (Row row : sheet) {
-            if (row.getRowNum() > headerRow) {
-                rowIndex++;
-                try {
-                    if (row.getCell(0) == null)
-                        break;
-
-                    out.add(createRowObject(xlsxHeaders, row, cls));
-
-                } catch (Exception e) {
-                    workbook.close();
-                    e.printStackTrace();
-                    //			listUploadService.save(new ListUploadFileDto(new Date(),file.getOriginalFilename(),rowIndex));
-                    throw new ExcelException(PropertiesUtilsParser.getMessage("message.excel.riga", new Object[]{sheet.getSheetName(), rowIndex}));
-                }
-            }
-        }
-        workbook.close();
-
-        //listUploadService.save(new ListUploadFileDto(new Date(),file.getOriginalFilename(),rowIndex));
-
-        return out;
-    }
-
-    protected T createExcelRow(List<Header> xlsxHeaders, Row row, Class<T> cls, T obj, short colore) throws Exception {
-        Method[] declaredMethods = obj.getClass()
-                .getDeclaredMethods();
-
-        for (Header xlsxHeader : xlsxHeaders) {
-            Cell cell = row.createCell(xlsxHeader.getColumnIndex());
-            String field = xlsxHeader.getFieldName();
-            Optional<Method> getter = Arrays.stream(declaredMethods)
-                    .filter(method -> isGetterMethod(field, method))
-                    .findFirst();
-            if (getter.isPresent()) {
-                Method getMethod = getter.get();
-                setCell(getMethod, row, cell, obj, colore);
-            }
-        }
-        return obj;
-    }
-
-    protected void setCell(Method getMethod, Row row, Cell cell, T obj, short colore) throws Exception {
-
-        cell.setCellValue(getMethod.invoke(obj) != null ? getMethod.invoke(obj).toString() : "");
-        if (colore != 0) {
-            setFontCell(cell, colore);
-        }
-
-    }
-
-    private void setFontCell(Cell cell, short colore) {
-
-        XSSFFont font = (XSSFFont) workbook.createFont();
-        font.setColor(colore);
-        CellStyle style = workbook.createCellStyle();
-        style.setFont(font);
-        cell.setCellStyle(style);
-    }
-
-    protected void validateHeader(Row row, List<Header> xlsxHeaders) throws ExcelException {
-
-        for (Header xlsxHeader : xlsxHeaders) {
-            if (!row.getCell(xlsxHeader.getColumnIndex()).getStringCellValue().replaceAll("\\s+", "").equalsIgnoreCase(xlsxHeader.getColumnName().replaceAll("\\s+", "")))
-                throw new ExcelException(PropertiesUtilsParser.getMessage("message.excel.header", new Object[]{xlsxHeader.getColumnName()}));
-        }
-    }
-
-    protected List<Header> modelObjectToXLSXHeader(Class<T> cls, Sheet sheet, int headerRow) {
-        return Stream.of(cls.getDeclaredFields())
-
-                .filter(field -> field.getAnnotation(Field.class) != null && field.getAnnotation(Field.class).read())
-                .map(field -> {
-                    Field importField = field.getAnnotation(Field.class);
-                    String xlsxColumn = importField.column()[0];
-                    int columnIndex = findColumnIndex(xlsxColumn, sheet, headerRow);
-                    return new Header(field.getName(), xlsxColumn, columnIndex, null, null);
-                })
-                .collect(Collectors.toList());
-    }
-
-    protected T createRowObject(List<Header> xlsxHeaders, Row row, Class<T> cls) throws Exception {
-        T obj = cls.getDeclaredConstructor().newInstance();
-
-        Method[] declaredMethods = obj.getClass()
-                .getDeclaredMethods();
-
-        for (Header xlsxHeader : xlsxHeaders) {
-            Cell cell = row.getCell(xlsxHeader.getColumnIndex());
-            String field = xlsxHeader.getFieldName();
-            Optional<Method> setter = Arrays.stream(declaredMethods)
-                    .filter(method -> isSetterMethod(field, method))
-                    .findFirst();
-            if (setter.isPresent()) {
-                Method setMethod = setter.get();
-                setObj(setMethod, cell, obj);
-            }
-        }
-        return obj;
-    }
-
-    protected static final String NUMERIC = "NUMERIC";
-    protected static final String STRING = "STRING";
-    protected static final String BLANK = "BLANK";
-
-    protected void setObj(Method setMethod, Cell cell, T obj) throws Exception {
-        switch (cell != null && cell.getCellType() != null ? cell.getCellType().toString() : BLANK) {
-            case NUMERIC:
-                setMethod.invoke(obj, cell.getNumericCellValue());
-                break;
-            case STRING:
-                setMethod.invoke(obj, cell.getStringCellValue());
-                break;
-            case BLANK:
-                setMethod.invoke(obj, "");
-                break;
-
-        }
-    }
-
-    protected int findColumnIndex(String columnTitle, Sheet sheet, int headerRow) {
-        Row row = sheet.getRow(headerRow);
-
-        if (row != null) {
-            for (Cell cell : row) {
-                if (CellType.STRING.equals(cell.getCellType()) && columnTitle.replaceAll("\\s+", "").equalsIgnoreCase(cell.getStringCellValue().replaceAll("\\s+", ""))) {
-                    return cell.getColumnIndex();
-                }
-            }
-        }
-        return 0;
-    }
-
-    // TODO FINO A QUI IMPORT
-
-
     /**
-     * Permette di scrivere su file excel, scorre i vari tipi di parser e direziona
+     * Analizza i fogli selezionati del template
      *
-     * @param templateSettingList   Lista di impostazioni da seguire
-     * @param sheetIndex                Numero del foglio da analizzare, -1 per analizzare tutti i fogli dell'excel
-     * @param templatePath              Path del template del foglio
+     * @param templatePath
+     * @param sheetIndex
+     * @param templateSettingList
+     * @return
+     * @throws IOException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws ExcelException
      */
-    public ByteArrayInputStream write(String templatePath, int sheetIndex, List<TemplateSetting> templateSettingList) throws IOException, InvocationTargetException, IllegalAccessException, ExcelException {
+    public ByteArrayInputStream write(String templatePath, int sheetIndex, List<TemplateSetting> templateSettingList, List<Integer> landscapePages) throws IOException, InvocationTargetException, IllegalAccessException, ExcelException {
         FileInputStream fileInputStream = new FileInputStream(templatePath);
         workbook = new XSSFWorkbook(fileInputStream);
 
         for(TemplateSetting setting : templateSettingList) {
             if(sheetIndex == -1) {
                 for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-                    sheet = workbook.getSheetAt(i);
+                    this.sheetIndex = i;
+                    this.sheet = workbook.getSheetAt(i);
+                    if(landscapePages.contains(i)) {
+                        PrintSetup printSetup = sheet.getPrintSetup();
+                        printSetup.setLandscape(true);
+                    }
                     write2(setting);
                 }
             }
             else {
-                sheet = workbook.getSheetAt(sheetIndex);
+                this.sheetIndex = sheetIndex;
+                this.sheet = workbook.getSheetAt(sheetIndex);
+                if(landscapePages.contains(sheetIndex)) {
+                    PrintSetup printSetup = sheet.getPrintSetup();
+                    printSetup.setLandscape(true);
+                }
                 write2(setting);
             }
         }
@@ -246,27 +102,48 @@ public class MagicParser<T> {
     }
 
     /**
-     * Permette di scrivere su file excel
+     * Gestice i vari parser da usare
      *
-     * @param object        Oggetto da scrivere
-     * @param symbol        Il simbolo nel template che identifica la cella da sovrascrivere (formato <symbol valore>)
-     * @param copyStyle     Se copiare lo stile della cella da sovrascrivere
+     * @param setting
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws ExcelException
+     * @throws IOException
      */
-    public void write2(TemplateSetting setting) throws InvocationTargetException, IllegalAccessException, ExcelException, IOException {
+    public void write2(TemplateSetting setting) throws InvocationTargetException, IllegalAccessException, IOException, ExcelException {
         // TODO: c'è un modo per non fare a mano la conversione? devo farla per forza causa parametri da passare...
-        if(setting instanceof ComplexTemplateSetting) {
+        if(setting.getClass() == ComplexTemplateSetting.class) {
             ComplexTemplateSetting s = (ComplexTemplateSetting) setting;
             ComplexParser parser = (ComplexParser) setting.getMagicParser();
             parser.write(s.getObject(), s.getSymbol(), s.isCopyStyle());
         }
-        else if(setting instanceof SimpleTemplateSetting) {
+        else if(setting.getClass() == ComplexDuplicatorTemplateSetting.class && ((ComplexDuplicatorTemplateSetting) setting).getSheetIndex() == this.sheetIndex) {
+            ComplexDuplicatorTemplateSetting s = (ComplexDuplicatorTemplateSetting) setting;
+            ComplexDuplicatorParser parser = (ComplexDuplicatorParser) setting.getMagicParser();
+            parser.write(s.getObjectList(), s.getSymbol(), s.getFirstRowIndex(), s.getLastRowIndex(), s.getFirstColumn(), s.getLastColumn(), s.getGap(), s.isDuplicate(), s.isCopyStyle());
+        }
+        else if(setting.getClass() == SimpleTemplateSetting.class) {
             SimpleTemplateSetting s = (SimpleTemplateSetting) setting;
             SimpleParser parser = (SimpleParser) setting.getMagicParser();
             parser.write(s.getObjectList(), s.getDirection(), s.getSteps(), s.isFillDuplicateHeadersCells(), s.getObjectListPortion(), s.getHeaderGroup(), s.getHeaderGroupStartIndex(), s.isCopyStyle());
         }
-        else if(setting instanceof DuplicatorTemplateSetting) {
-            DuplicatorTemplateSetting s = (DuplicatorTemplateSetting) setting;
-            DuplicatorParser parser = (DuplicatorParser) setting.getMagicParser();
+        else if(setting.getClass() == SimpleDuplicatorTemplateSetting.class && ((SimpleDuplicatorTemplateSetting) setting).getSheetIndex() == this.sheetIndex) {
+            SimpleDuplicatorTemplateSetting s = (SimpleDuplicatorTemplateSetting) setting;
+            SimpleDuplicatorParser parser = (SimpleDuplicatorParser) setting.getMagicParser();
+
+            boolean firstListToDuplicate;
+            if(map.get(sheetIndex) == null) {
+                map.put(sheetIndex, true);
+                firstListToDuplicate = true;
+            }
+            else
+                firstListToDuplicate = false;   // TODO: se usassi una singola impostazione a scacchi per picchetti e campate non servirebbe questa logica sui fogli e sulla prima lista, in realtà forse mi basta fare prima le campate e risolvo
+
+            parser.write(s.getObjectList(), s.getDirection(), s.getSteps(), s.getFirstRowToDuplicateIndex(), s.getLastRowToDuplicateIndex(), s.getGap(), s.isFillDuplicateHeadersCells(), s.getObjectListPortion(), s.getHeaderGroup(), s.getHeaderGroupStartIndex(), s.isCopyStyle(), firstListToDuplicate, s.getSheetIndex(), s.getMaxObjectForPage());
+        }
+        else if(setting instanceof CantiereTemplateSetting) {
+            CantiereTemplateSetting s = (CantiereTemplateSetting) setting;
+            CantiereParser parser = (CantiereParser) setting.getMagicParser();
             parser.write(s.getObjectClass(), s.getObjectList(), s.getKey(), s.isCopyStyle());
         }
     }
@@ -292,13 +169,21 @@ public class MagicParser<T> {
             newStyle.cloneStyleFrom(cellStyle);
             cell.setCellStyle(newStyle);
         }
-        String field = xlsxHeader.getFieldName(); // prendo il campo @Field, es. nomeCantiere
+        String field = xlsxHeader.getFieldName(); // prendo l'attributo annotato con @Field
+        String columnName = xlsxHeader.getColumnName().replaceAll(" ", "");
         Optional<Method> getter = Arrays.stream(declaredMethods)
                 .filter(method -> isGetterMethod(field, method))
-                .findFirst(); // prendo il metodo get dell'attributo @Field, es. getNomeCantiere()
+                .findFirst(); // prendo il metodo get dell'attributo @Field
         if (getter.isPresent()) {
-            Method getMethod = getter.get();    // es. getNomeCantiere()
-            cell.setCellValue(getMethod.invoke(obj) != null ? getMethod.invoke(obj).toString() : ""); // lancio il metodo getNomeCantiere() e il risultato è il valore della cella
+            Object value = getter.get().invoke(obj); // tramite reflection lancio il metodo get del field e il risultato lo inserisco in value
+            String cellValue = value instanceof Date ?
+                    new SimpleDateFormat("dd/MM/yyyy").format((Date) value) : // formato di tutte le date
+                    value != null ? value.toString() : "";
+            if (columnName.equalsIgnoreCase("avanzamentoda")) // gestisco la cella unificata (solitamente) a inizio report contenente le date REPORT AVANZAMENTO
+                avanzamentoDa = cellValue;
+            else if (columnName.equalsIgnoreCase("avanzamentoa"))
+                cellValue = "REPORT AVANZAMENTO DAL " + avanzamentoDa + " AL " + cellValue;
+            cell.setCellValue(cellValue);
         }
     }
 }

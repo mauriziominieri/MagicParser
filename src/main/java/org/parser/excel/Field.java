@@ -13,18 +13,6 @@ public @interface Field {
 
 	String[] group() default ""; // gruppi per gestire i picchetti dell' ElettAereo
 
-	boolean print() default true;//Scrivere su pdf
-
-	boolean read() default true;//Leggere excel
-
-	boolean printXlsx() default true; //Scrivere su excel
-
-	int row() default 1;
-
-	int colspan() default 1;
-
-	String columnSec() default "";
-
-	int columnType() default 0;
+	int index() default -1; // per gestire quei campi duplicati
 
 }

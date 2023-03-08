@@ -22,7 +22,7 @@ import java.util.Optional;
  */
 
 @Data
-public class DuplicatorParser<T> extends MagicParser {
+public class CantiereParser<T> extends MagicParser {
     private int lastSubappaltatoreFieldsIndex;
 
     private List<Row> rowsToDuplicate;
@@ -33,7 +33,7 @@ public class DuplicatorParser<T> extends MagicParser {
 
     int numberOfRowsToDuplicate = 3; // TODO da parametrizzare
 
-    public void write(Class<T> objectClass, List<T> objectList, String key, boolean copyStyle) throws ExcelException, InvocationTargetException, IllegalAccessException, IOException {
+    public void write(Class<T> objectClass, List<T> objectList, String key, boolean copyStyle) throws InvocationTargetException, IllegalAccessException, IOException, ExcelException {
 
         Workbook tempWorkbook = new XSSFWorkbook();
         Sheet tempSheet = tempWorkbook.createSheet("Sheet temporaneo");
@@ -180,7 +180,7 @@ public class DuplicatorParser<T> extends MagicParser {
                 String xlsxColumn = importField.column()[0]; // IL NOME DELLA COLONNA NELL'EXCEL PRESO DAL @Field
                 String group = importField.group()[0];
                 List<Coordinate> coordinateList = getSubappaltatoreFieldsCoordinates(xlsxColumn, sheet, key);
-                listHeader.add(new Header(field.getName(), xlsxColumn, -1, group, coordinateList));
+                listHeader.add(new Header(field.getName(), xlsxColumn, -1, group, coordinateList)); // TODO controllare se da errore
             }
         }
         return listHeader;
@@ -221,7 +221,6 @@ public class DuplicatorParser<T> extends MagicParser {
     public void shiftPorzione(Sheet sheet, int nPosti) {
         int firstRow = lastSubappaltatoreFieldsIndex - 2; // TODO renderlo parametro
         int lastRow = firstRow + 2; // TODO renderlo parametro
-
         for (int j = 0; j < rowsToDuplicate.size(); j++) {
             Row copiedRow = rowsToDuplicate.get(j) == null ? sheet.createRow(j) : rowsToDuplicate.get(j);
             // non posso copiare stili tra diversi workbook quindi mi serve la riga originale da cui prenderò lo stile
@@ -232,8 +231,9 @@ public class DuplicatorParser<T> extends MagicParser {
             for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
                 CellRangeAddress region = sheet.getMergedRegion(i);
                 if (region.getFirstRow() == copiedRow.getRowNum())
-                    sheet.addMergedRegion(new CellRangeAddress(region.getFirstRow() + nPosti, region.getLastRow() + nPosti, region.getFirstColumn(), region.getLastColumn()));
+                    sheet.addMergedRegion(new CellRangeAddress(newRow.getRowNum(), newRow.getRowNum(), region.getFirstColumn(), region.getLastColumn()));
             }
+
             // copio stile e valore
             for (int i = copiedRow.getFirstCellNum(); i < copiedRow.getLastCellNum(); i++) {
                 Cell oldCell = copiedRow.getCell(i);
