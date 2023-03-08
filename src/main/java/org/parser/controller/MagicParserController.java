@@ -2,8 +2,8 @@ package org.parser.controller;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.parser.excel.ExcelException;
 import org.parser.excel.MagicParserWorker;
+import org.parser.exception.ExcelException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -48,9 +48,21 @@ public class MagicParserController {
         return magicParserWorker.report2();
     }
 
-    @ApiOperation("Crea e scarica l'excel Report3")
-    @GetMapping(value="report3")
-    public ResponseEntity<Resource> report3() throws ExcelException, IOException, InvocationTargetException, IllegalAccessException {
-        return magicParserWorker.report3();
+    @ApiOperation("Crea e scarica l'excel Report Stazioni")
+    @GetMapping(value="stazioni")
+    public ResponseEntity<Resource> reportStazioni() throws Exception {
+        return magicParserWorker.creaExcelStazioni();
+    }
+
+    @ApiOperation("Crea e scarica l'excel Report Aereo")
+    @GetMapping(value="aereo")
+    public ResponseEntity<Resource> reportAereo() throws Exception {
+        return magicParserWorker.creaExcelElettrAereo();
+    }
+
+    @ApiOperation("Crea e scarica l'excel Report Cantiere")
+    @GetMapping(value="cantiere")
+    public ResponseEntity<Resource> reportCantiere() throws Exception {
+        return magicParserWorker.creaExcelElencoAutorizzatoCantiere();
     }
 }

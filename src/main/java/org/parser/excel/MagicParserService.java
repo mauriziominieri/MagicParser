@@ -1,5 +1,6 @@
 package org.parser.excel;
 
+import org.parser.exception.ExcelException;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;

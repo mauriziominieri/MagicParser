@@ -4,6 +4,7 @@ import lombok.Data;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.parser.exception.ExcelException;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;

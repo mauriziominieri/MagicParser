@@ -3,6 +3,7 @@ package org.parser.excel;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.parser.exception.ExcelException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

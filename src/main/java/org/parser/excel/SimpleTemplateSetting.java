@@ -1,13 +1,14 @@
 package org.parser.excel;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
+@Data
 public class SimpleTemplateSetting<T> extends TemplateSetting {
     private List<T> objectList; // lista degli oggetti poi da scrivere nell'excel
     private boolean fillDuplicateHeadersCells; // se riempire le celle duplicate, questa impostazione è INCOMPATIBILE con objectListPortion
